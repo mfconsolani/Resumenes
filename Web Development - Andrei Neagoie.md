@@ -3128,7 +3128,7 @@ You can style with tachyons by adding the elements to a ```className``` like the
 
 We can't use ```class``` because it is a reserved word for JavaScript language; instead, we use ```className```. And eventhough it looks like HTML, it is JSX. 
 
-This syntax is actually called **JSX**. Underneath the hood what React is doing through JSX is letting us use this syntax (```<div className="f1 tc">```) that looks like HTML but is not actually HTML. For this, React uses **JSX** to create their Virtual DOM. **React compares the Real DOM vs. the Virtual DOM and makes the changes that which must be done only**.
+This syntax is actually called **JSX**. Underneath the hood what React is doing through JSX is letting us use this syntax (```<div className="f1 tc">```) that looks like HTML but is not actually HTML. For this, React uses **JSX** to create their Virtual DOM. **React compares the Real DOM vs. the Virtual DOM and makes the changes that must be done only**.
 
 [Separation of concerns](https://medium.com/@alialhaddad/separation-of-concerns-in-react-d4f74aaf3800)
 
@@ -3549,20 +3549,62 @@ onSearchChange = (event) => {
 }
 ```
 
-**IMPORTANT!**
+## About ```setState``` asynchronous ```setState```
 
 [```setState``` React Doc](https://reactjs.org/docs/faq-state.html#what-does-setstate-do)
+
+[Asynchronous ```setState``` - Andrei Neagoie](https://www.udemy.com/course/complete-react-developer-zero-to-mastery/learn/lecture/15123266#questions)
+
+_Syntax:_
+
+```js
+setState(updater, [callback])
+```
+
+```setState()``` enqueues changes to the component state and tells React that this component and its children need to be re-rendered with the updated state. _Think of ```setState()``` as a request rather than an immediate command to update the component._ For better perceived performance, React may delay it, and then update several components in a single pass. **React does not guarantee that the state changes are applied immediately.**
+
+```setState()``` does not always immediately update the component. It may batch or defer the update until later. This makes reading ```this.state``` right after calling ```setState()``` a potential pitfall. Instead, use ```componentDidUpdate``` or a ```setState``` callback (```setState(updater, callback)```), either of which are guaranteed to fire after the update has been applied. **If you need to set the state based on the previous state, read about the ```updater``` argument below**
+
+The first argument is an ```updater``` function with the signature:
+
+```js
+(state, props) => stateChange
+```
+
+```state``` is a reference to the component state at the time the change is being applied. It should not be directly mutated. Instead, changes should be represented by building a new object based on the input from ```state``` and ```props```. For instance, suppose we wanted to increment a value in state by ```props.step```:
+
+```js
+this.setState((state, props) => {
+  return {counter: state.counter + props.step};
+});
+```
+
+Both ```state``` and ```props``` received by the updater function are guaranteed to be up-to-date. The output of the updater is shallowly merged with ```state```. 
+
+The second parameter to ```setState()``` is an optional callback function that will be executed once ```setState``` is completed and the component is re-rendered. Generally we recommend using ```componentDidUpdate()``` for such logic instead.
+
 
 **What does ```setState``` do?**
 
 >```setState()``` schedules an update to a component’s state object. When state changes, the component responds by re-rendering.
 
+
 **Why is ```setState``` giving me the wrong value?**
+
 >Calls to ```setState``` are asynchronous - don’t rely on ```this.state``` to reflect the new value immediately after calling ```setState```. Pass an updater function instead of an object if you need to compute values based on the current state.
+
+
+**When is ```setState``` asynchronous?**
+
+>Currently, ```setState``` is asynchronous inside event handlers.
+
+>This ensures, for example, that if both Parent and Child call ```setState``` during a click event, Child isn’t re-rendered twice. Instead, React “flushes” the state updates at the end of the browser event. React intentionally “waits” until all components call ```setState()``` in their event handlers before starting to re-render. This boosts performance by avoiding unnecessary re-renders.
+
 
 **How do I update state with values that depend on the current state?**
 
->Pass a function instead of an object to ```setState``` to ensure the call always uses the most updated version of state (see below).
+>Pass a function instead of an object to ```setState``` to ensure the call always uses the most updated version of state.
+
 
 **What is the difference between passing an object or a function in ```setState```?**
 
@@ -3586,7 +3628,10 @@ handleSomething() {
   // But when React re-renders the component, it will be 3.
 }
 ```
-____
+
+
+
+
 
 **IMPORTANT!**
 
@@ -3751,6 +3796,10 @@ In a real app, ```robots``` would most likely be using elemnts from a json store
 
 #### Life-Cycle Methods
 
+[```componentDidMount``` Life Cycle method - Yihua Zhang](https://www.udemy.com/course/complete-react-developer-zero-to-mastery/learn/lecture/15104344#questions)
+
+[```componentDidUpdate``` Life Cycle method - Yihua Zhang](https://www.udemy.com/course/complete-react-developer-zero-to-mastery/learn/lecture/15104352#questions)
+
 React lets you define components as classes or functions. Components defined as classes currently provide more features which are described in detail on this page. To define a React component class, you need to extend ```React.Component```:
 
 ```js
@@ -3771,7 +3820,7 @@ React comes with a few other things inside of the ```Components``` that we can u
 
 We have three sections inside the life-cycle: 
 
-1. *Mouting:* when we refresh the page, the ```App``` component gets mounted into the ```document.getElementById('root')``` that belongs to:
+1. *Mouting - ```componentDidMount```*: when we refresh the page, the ```App``` component gets mounted into the ```document.getElementById('root')``` that belongs to:
 
 ```js
 ReactDOM.render(
@@ -3788,17 +3837,35 @@ And if you go to _index.html_ you will find that the first ```<div>``` in the ``
 
 These methods are called in the following order when an instance of a component is being created and inserted into the DOM (meaning, during *Mounting*):
 
-* ```constructor()```
-* ```static getDerivedStateFromProps()```
-* ```render()```
-* ```componentDidMount()```
+1. ```constructor()```
+2. ```static getDerivedStateFromProps()```
+3. ```render()```
+4. ```componentDidMount()```
 
 So, React checks if the Component has a ```constructor()```; if it does, ir runs tha piece of code. Then it checks if it has a ```static getDerivedStateFromProps()``` and so on. 
 
-2. *Updating:* Updates happen whenever a component changes. Like in the robofriends app, everytime we would type something in the searchbox, the ```CardList``` we be updated and re-rendered. 
+2. *Updating - ```componentDidUpdate```*: Updates happen whenever a component changes. Like in the robofriends app, everytime we would type something in the searchbox, the ```CardList``` we be updated and re-rendered. 
 
-3. *Unmounting:* Unmounting happens whe a component is removed from a page. So if we change from one web app to the other, the first web app components will be unmounted or removed. 
+Updating gets triggered mainly when there is an update in some component's ```props```, or when there is a call to ```setState``` function or when we call ```forceUpdate()```. 
 
+So, the process would be something like this:
+
+1. Change on a ```prop```
+2. ```render``` gets triggered
+3. ```componentDidUpdate``` get triggered after rendering.
+
+
+**IMPORTANT!**
+
+_Additional Note:_
+>```shouldComponentUpdate``` allows us to determine if, given two parameters (```nextProps``` and ```nextState```), the component should update or not whether the function evaluates to ```true``` or ```false```. 
+>This gives us the power to chose in some cases whether to re-render or not a component, because it might not be affected for a change in a prop or state but it still re-rendering because of the ```componenteDidUpdate``` process and affecting the application performance. 
+
+
+3. *Unmounting - ```componentWillUnmount```*: Unmounting happens whe a component is removed from a page. So if we change from one web app to the other, the first web app components will be unmounted or removed. 
+
+
+![Life Cycle Methods Diagram](https://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/ogimage.png)
 
 _Additional Note:_
 >What are React lifecycle methods? You can think of React lifecycle methods as the series of events that happen from the birth of a React component to its death.
@@ -3921,6 +3988,8 @@ export default Scroll;
 ```npm run build``` creates a ```build``` folder with minified documents which is ready to be deployed.
 
 #### Updating project
+
+[Updating Project for NPM & Yarn - Yihua Zhang](https://www.udemy.com/course/complete-react-developer-zero-to-mastery/learn/lecture/16666268#questions)
 
 ```npm update```
 
@@ -6012,4 +6081,7 @@ Video explaining the meaning of ```this``` and what it means in React components
 [Meaning of this - Yihua Zheng](https://www.udemy.com/course/complete-react-developer-zero-to-mastery/learn/lecture/14870617#questions)
 
 ____
+
+
+
 
